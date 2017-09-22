@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
         /*	    FILL IN	 */
         memset(&rcvBuf, 0, RCVBUFSIZE);
 
+        // receive back the response regarding the balance of the account
         numBytes = recv(clientSock, rcvBuf, RCVBUFSIZE, 0);
         if (numBytes < 0) {
             puts("Receiving of the balance failed...");
@@ -143,9 +144,10 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        
+        // move the balance amount from rcvBuf into the balance holder
         sscanf(rcvBuf, "%d", &balance);
 
+        // display the account name and the balance of it
         printf("%s\n", accountName);
         printf("Balance is: %i\n", balance);
     } else if (strcmp(commandName, "WITHDRAW") == 0) {
@@ -171,7 +173,7 @@ int main(int argc, char *argv[])
 
         // clear the send buffer so you can send the withdrawal amount
         memset(&sndBuf, 0, SNDBUFSIZE);
-        // // copy the withdrawal amount into the send buffer
+        // copy the withdrawal amount into the send buffer
         strcpy(sndBuf, withdrawalAmount);
         // send the amount for which you wish to make a withdrawal
         //printf("%s", sndBuf);
@@ -186,18 +188,20 @@ int main(int argc, char *argv[])
             close(clientSock);
             exit(1);
         }
-
+        // receive a response alerting as to whether the withdrawal caused a timeout to occur
         numBytes = recv(clientSock, rcvBuf, RCVBUFSIZE, 0);
         if (numBytes < 0) {
             puts("Receiving response regarding account timeout failed...");
             close(clientSock);
             exit(1);
         }
+        // if you receive a "no timeout" response then you know the withdrawal was not
+        // a fourth attempt in under a minute
         if (strcmp(rcvBuf, "No timeout") == 0) {
             /* Receive and print response from the server */
             /*      FILL IN  */
             memset(&rcvBuf, 0, RCVBUFSIZE);
-
+            // thus, look to receive the response as to whether there are enough funds
             numBytes = recv(clientSock, rcvBuf, RCVBUFSIZE, 0);
             if (numBytes < 0) {
                 puts("Receiving of the packet failed...\n");
@@ -208,25 +212,33 @@ int main(int argc, char *argv[])
                 close(clientSock);
                 exit(1);
             }
-
+            // if there are not enough funds to complete the withdrawal, alert the client
+            // of that fact
             if (strcmp(rcvBuf, "Not enough funds!") == 0) {
                 puts(rcvBuf);
+                // otherwise, go ahead and print out the updated balance sent back
+                // by the server
             } else {
-                
+                // load the balance into balance holder
                 sscanf(rcvBuf, "%d", &balance);
-
+                // print out the account name and balance
                 printf("%s\n", accountName);
                 printf("New Balance is: %i\n", balance);
 
                 memset(&rcvBuf, 0, RCVBUFSIZE);
+                // receive the message to alert the user the withdrawal was successful
                 numBytes = recv(clientSock, rcvBuf, RCVBUFSIZE, 0);
-
+                // print the success message
                 puts(rcvBuf);
             }
+            // otherwise, if the response is that there aren't enough funds, let
+            // the client know that and close the socket
         } else if (strcmp(rcvBuf, "Not enough funds!") == 0) {
             puts(rcvBuf);
             close(clientSock);
             exit(1);
+            // if neitehr is the case, then it means the server timed out
+            // and the client needs to be informed of that
         } else {
             puts("ERROR: Account timeout occurred!");
             close(clientSock);

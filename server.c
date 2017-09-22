@@ -135,9 +135,10 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-	   /* Extract the account name from the packet, store in nameBuf */
+	   
 	   /* Look up account balance, store in balance */
 	   /*	FILL IN	    */
+        // extract the command type from the socket: either WITHDRAWAL or BAL
         memset(&recBuf, 0, RCVBUFSIZE);
         numBytes = recv(clientSock, recBuf, RCVBUFSIZE, 0);
         if (numBytes < 0) {
@@ -161,6 +162,7 @@ int main(int argc, char *argv[])
             
             // clear the recBuf that the server receives its data in
             memset(&recBuf, 0, RCVBUFSIZE);
+            // receive the account name the client wants the balance of
             numBytes = recv(clientSock, recBuf, RCVBUFSIZE, 0);
             if (numBytes < 0) {
                 printf("Receiving the name from the packet failed...\n");
@@ -297,6 +299,9 @@ int main(int argc, char *argv[])
                         }
                     }
                     if (withdrawFromSavings) {
+                        // this logic basically handles cases where the server has "timed out"
+                        // and thus this logic will only be deployed in situations where the
+                        // server is not timed out
                         mySavings = mySavings - withdrawAmount;
                         balance = mySavings;
                         //printf("Balance: %i", balance);
